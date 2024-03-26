@@ -53,7 +53,8 @@ class WeatherViewModel @Inject constructor(
                             "ru"
                         )
                         if (response.isSuccess) {
-                            updatedForecast.add(response.getOrThrow())
+                            val forecast = response.getOrThrow()
+                            updatedForecast.add(forecast.copy(date = it.date))
                         } else {
                             updatedForecast.add(it)
                         }

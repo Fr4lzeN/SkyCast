@@ -51,7 +51,7 @@ class WeatherApiRepositoryImpl(
 
     private fun ForecastDTO.toDomain(): Forecast {
         return Forecast(
-            date = this.date,
+            date = System.currentTimeMillis(),
             main = this.main.toDomain(),
             weather = this.weather[0].toDomain(),
             cloudiness = clouds.cloudiness,

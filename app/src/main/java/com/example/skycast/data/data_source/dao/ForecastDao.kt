@@ -19,7 +19,7 @@ interface ForecastDao {
     @Query("SELECT * FROM forecast WHERE cityName==:cityName")
     suspend fun getForecast(cityName: String): Forecast
 
-    @Query("SELECT * FROM forecast")
+    @Query("SELECT * FROM forecast ORDER BY date asc")
     suspend fun getAllForecasts(): List<Forecast>
 
     @Query("DELETE FROM forecast WHERE cityName==:cityName")
