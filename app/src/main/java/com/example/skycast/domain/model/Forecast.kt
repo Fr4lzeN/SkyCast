@@ -1,30 +1,23 @@
 package com.example.skycast.domain.model
 
 import androidx.room.Embedded
-import androidx.room.Relation
-import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Locale
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 
-
+@Entity
 data class Forecast(
+    val date: Long,
     @Embedded
-    val city: City,
-    @Relation(
-        parentColumn = "city_id",
-        entityColumn = "city_name",
-        entity = DayWeather::class
-    )
-    val dayWeatherList: List<DayWeather>,
-) {
-
-    fun getForecastTime(): Calendar? {
-        if (dayWeatherList.isEmpty()) return null
-        val formatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-        val calendar = Calendar.getInstance()
-        calendar.time = formatter.parse(dayWeatherList.first().forecastTime)!!
-        return calendar
-    }
-
-}
-
+    val main: MainWeather,
+    @Embedded
+    val weather: Weather,
+    val cloudiness: Int,
+    @Embedded
+    val wind: Wind,
+    val visibility: Int,
+    val pop: Double,
+    @PrimaryKey
+    val cityName: String,
+    @Embedded
+    val cityInfo: City,
+)

@@ -11,8 +11,8 @@ interface WeatherApi {
         val BASE_API = "https://api.openweathermap.org/"
     }
 
-    @GET("data/2.5/forecast")
-    fun getWeather(
+    @GET("data/2.5/weather")
+    suspend fun getWeather(
         @Query("lat") latitude: Double,
         @Query("lon") longitude: Double,
         @Query("appid") apikey: String,
@@ -20,8 +20,8 @@ interface WeatherApi {
         @Query("lang") language: String,
     ): Response<ForecastDTO>
 
-    @GET("data/2.5/forecast")
-    fun getWeather(
+    @GET("data/2.5/weather")
+    suspend fun getWeather(
         @Query("q") city: String,
         @Query("appid") apikey: String,
         @Query("units") units: String, // standard, metric and imperial

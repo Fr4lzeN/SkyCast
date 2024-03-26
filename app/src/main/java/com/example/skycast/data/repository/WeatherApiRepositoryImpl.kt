@@ -1,14 +1,11 @@
 package com.example.skycast.data.repository
 
 import com.example.skycast.data.data_source.api.WeatherApi
-import com.example.skycast.data.dto.weather.CityDTO
-import com.example.skycast.data.dto.weather.DayWeatherDTO
 import com.example.skycast.data.dto.weather.ForecastDTO
 import com.example.skycast.data.dto.weather.MainWeatherDTO
 import com.example.skycast.data.dto.weather.WeatherDTO
 import com.example.skycast.data.dto.weather.WindDTO
 import com.example.skycast.domain.model.City
-import com.example.skycast.domain.model.DayWeather
 import com.example.skycast.domain.model.Forecast
 import com.example.skycast.domain.model.MainWeather
 import com.example.skycast.domain.model.Weather
@@ -53,44 +50,35 @@ class WeatherApiRepositoryImpl(
 
 
     private fun ForecastDTO.toDomain(): Forecast {
-        val city = city.toDomain()
-        return Forecast(city, dayWeatherList.map { it.toDomain(city.name) })
+        return Forecast(
+            date = this.date,
+            main = this.main.toDomain(),
+            weather = this.weather[0].toDomain(),
+            cloudiness = clouds.cloudiness,
+            wind = wind.toDomain(),
+            visibility = visibility,
+            pop = pop,
+            cityName = name,
+            cityInfo = City(sunrise = sys.sunrise, sunset = sys.sunset)
+        )
     }
 
-    private fun CityDTO.toDomain(): City {
-        return City(name, sunrise, sunset)
+    private fun MainWeatherDTO.toDomain(): MainWeather {
+        return MainWeather(
+            kotlin.math.round(temperature).toInt(),
+            kotlin.math.round(feelsLikeTemperature).toInt(),
+            kotlin.math.round(temperatureMin).toInt(),
+            kotlin.math.round(temperatureMax).toInt(),
+            pressure,
+            humidity
+        )
     }
-}
 
-private fun DayWeatherDTO.toDomain(cityId: String): DayWeather {
-    return DayWeather(
-        cityId = cityId,
-        date = date,
-        cloudiness = clouds.cloudiness,
-        wind = wind.toDomain(),
-        visibility = visibility,
-        pop = pop,
-        weather = weather.toDomain(),
-        mainWeather = main.toDomain(),
-        forecastTime = forecastTime
-    )
-}
+    private fun WeatherDTO.toDomain(): Weather {
+        return Weather(type, description)
+    }
 
-private fun MainWeatherDTO.toDomain(): MainWeather {
-    return MainWeather(
-        temperature,
-        feelsLikeTemperature,
-        temperatureMin,
-        temperatureMax,
-        pressure,
-        humidity
-    )
-}
-
-private fun WeatherDTO.toDomain(): Weather {
-    return Weather(type, description)
-}
-
-private fun WindDTO.toDomain(): Wind {
-    return Wind(speed, directionDegrees, gust)
+    private fun WindDTO.toDomain(): Wind {
+        return Wind(speed, directionDegrees, gust)
+    }
 }

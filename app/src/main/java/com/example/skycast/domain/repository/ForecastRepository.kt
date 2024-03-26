@@ -1,18 +1,16 @@
 package com.example.skycast.domain.repository
 
-import com.example.skycast.domain.model.City
 import com.example.skycast.domain.model.Forecast
 
 interface ForecastRepository {
 
-    suspend fun addForecast(forecast: Forecast)
+    suspend fun insertForecast(forecast: Forecast)
+    suspend fun insertAllForecasts(forecasts: List<Forecast>)
 
-    suspend fun deleteCity(city: City)
+    suspend fun getForecast(cityName: String): Forecast
 
-    suspend fun getCities(): List<City>
+    suspend fun getAllForecasts(): List<Forecast>
 
-    suspend fun getForecast(cityName: String): Result<Forecast>
-
-    suspend fun updateForecast(forecast: Forecast)
+    suspend fun deleteForecast(cityName: String)
 
 }
