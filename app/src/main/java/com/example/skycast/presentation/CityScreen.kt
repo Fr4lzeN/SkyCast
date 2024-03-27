@@ -17,9 +17,9 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -107,7 +107,7 @@ fun CityScreen(
                     Modifier
                         .fillMaxWidth()
                         .clickable {
-                            navController.navigate(Screen.MainScreen.withArgs(it.toString())) {
+                            navController.navigate(Screen.MainScreen.route) {
                                 popUpTo(Screen.CityScreen.route) {
                                     inclusive = true
                                 }
@@ -191,7 +191,7 @@ fun SearchCity(modifier: Modifier, addCity: (String) -> Unit) {
             .clip(RoundedCornerShape(16.dp))
             .padding(8.dp),
         textStyle = TextStyle(color = Color.White),
-        colors = TextFieldDefaults.outlinedTextFieldColors(
+        colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = Color.White,
             unfocusedBorderColor = Color(255, 255, 255, 200),
             focusedLabelColor = Color.White,

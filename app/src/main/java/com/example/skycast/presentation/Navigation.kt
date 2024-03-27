@@ -2,11 +2,9 @@ package com.example.skycast.presentation
 
 import androidx.compose.runtime.Composable
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
 
 @Composable
 fun Navigation() {
@@ -21,19 +19,14 @@ fun Navigation() {
             WaitingScreen(navController, viewModel.hasCities)
         }
 
-        composable(route = Screen.MainScreen.route + "/{selected}",
-            arguments = listOf(
-                navArgument("selected") {
-                    type = NavType.IntType
-                    defaultValue = 0
-                    nullable = false
-                }
-            )) {
+        composable(route = Screen.MainScreen.route) {
             WeatherScreen(
                 navController = navController,
                 viewModel.forecasts,
-                it.arguments!!.getInt("selected")
+                viewModel.selectedForecast,
+                viewModel::switchForecast
             )
+
         }
         // how to use arguments
         /*composable(route = Screen.CityScreen.route+"/{city}",
@@ -54,15 +47,8 @@ fun Navigation() {
                 viewModel::addCity
             )
         }
-        composable(route = Screen.ExtendedWeatherScreen.route + "/{selected}",
-            arguments = listOf(
-                navArgument("selected") {
-                    type = NavType.IntType
-                    defaultValue = 0
-                    nullable = false
-                }
-            )) {
-            ExtendedWeatherScreen(navController = navController, viewModel.forecasts,it.arguments!!.getInt("selected"))
+        composable(route = Screen.ExtendedWeatherScreen.route) {
+            ExtendedWeatherScreen(navController = navController, viewModel.selectedForecast)
         }
     }
 }

@@ -18,12 +18,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -46,33 +46,20 @@ import com.example.skycast.R
 import com.example.skycast.domain.model.Forecast
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.filterNotNull
 
 @Composable
 fun ExtendedWeatherScreen(
     navController: NavHostController,
-    forecasts: StateFlow<List<Forecast>?>,
-    selected: Int
+    selectedForecast: StateFlow<Forecast?>,
 ) {
     var isTextVisible by remember { mutableStateOf(true) }
-    var forecast by remember {
-        mutableStateOf<Forecast?>(null)
-    }
+    val forecast = selectedForecast.collectAsState()
 
     LaunchedEffect(Unit) {
         while (true) {
             delay(2000)
             isTextVisible = !isTextVisible
         }
-    }
-
-    LaunchedEffect(forecasts) {
-        forecasts
-            .filterNotNull()
-            .collectLatest {
-                forecast = it[selected]
-            }
     }
 
     val alpha by animateFloatAsState(
@@ -121,9 +108,8 @@ fun ExtendedWeatherScreen(
             Text(text = "Обратно", color = Color.White, fontSize = 14.sp)
         }
         Spacer(modifier = Modifier.height(32.dp))
-        Details(Modifier.fillMaxWidth(), forecast)
+        Details(Modifier.fillMaxWidth(), forecast.value)
         Spacer(modifier = Modifier.height(32.dp))
-        //WeekForecast(Modifier.fillMaxWidth())
     }
 }
 
@@ -205,7 +191,7 @@ fun CreateDetailItem(index: Int, forecast: Forecast?) {
 
 @Composable
 fun DelimiterRow(modifier: Modifier = Modifier, text: String) {
-    Row {
+    Row(modifier) {
         Text(
             text = text,
             color = Color.White,
@@ -238,51 +224,6 @@ fun DetailItem(modifier: Modifier = Modifier, drawable: Int, name: String, value
         )
         Text(text = name, color = Color.White, fontWeight = FontWeight.Light, fontSize = 16.sp)
         Text(text = value, color = Color.White, fontWeight = FontWeight.Medium, fontSize = 20.sp)
-    }
-}
-
-@Composable
-fun WeekForecast(modifier: Modifier = Modifier) {
-    DelimiterRow(text = "Прогноз на 7 дней")
-    Spacer(modifier = Modifier.height(16.dp))
-    LazyRow(
-        modifier = modifier, content = {
-            items(7) {
-                ForecastItem(Modifier.width(32.dp))
-            }
-        }, horizontalArrangement = Arrangement.SpaceEvenly,
-        userScrollEnabled = false
-    )
-}
-
-@Composable
-fun ForecastItem(modifier: Modifier = Modifier) {
-    Column(
-        modifier,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceEvenly
-    ) {
-        Text(text = "Сб", color = Color.White, fontWeight = FontWeight.Medium, fontSize = 20.sp)
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(text = "80%", color = Color.White, fontWeight = FontWeight.Light, fontSize = 16.sp)
-        Spacer(modifier = Modifier.height(4.dp))
-        Image(painter = painterResource(id = R.drawable.cloudly), contentDescription = null)
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(text = "25°", color = Color.White, fontWeight = FontWeight.Medium, fontSize = 20.sp)
-        Box(
-            modifier = Modifier
-                .height(1.dp)
-                .fillMaxWidth()
-                .alpha(0.5f)
-                .background(Color.White)
-        )
-        Text(
-            text = "25°",
-            modifier = Modifier.alpha(0.5f),
-            color = Color.White,
-            fontWeight = FontWeight.Light,
-            fontSize = 20.sp
-        )
     }
 }
 

@@ -22,7 +22,7 @@ fun WaitingScreen(navController: NavHostController, hasCities: SharedFlow<Boolea
     LaunchedEffect(hasCities) {
         hasCities.filterNotNull().collect {
             if (it) {
-                navController.navigate(Screen.MainScreen.withArgs("0")) {
+                navController.navigate(Screen.MainScreen.route) {
                     popUpTo(Screen.WaitingScreen.route) {
                         inclusive = true
                     }

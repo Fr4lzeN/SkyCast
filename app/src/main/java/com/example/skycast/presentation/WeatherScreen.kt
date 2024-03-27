@@ -1,13 +1,12 @@
 package com.example.skycast.presentation
 
-import android.util.Log
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,10 +20,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -45,17 +46,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.skycast.R
-import com.example.skycast.core.WeatherType
+import com.example.skycast.core.iconFromWeatherType
 import com.example.skycast.domain.model.City
-import com.example.skycast.domain.model.DayWeather
 import com.example.skycast.domain.model.Forecast
 import com.example.skycast.domain.model.MainWeather
 import com.example.skycast.domain.model.Weather
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.filterNotNull
-import java.util.Calendar
 import kotlin.math.abs
 
 
@@ -63,48 +60,18 @@ import kotlin.math.abs
 fun WeatherScreen(
     navController: NavController,
     forecasts: StateFlow<List<Forecast>?>,
-    selected: Int
+    selected: StateFlow<Forecast?>,
+    switchForecast: (Forecast?, Boolean) -> Unit
 ) {
-    var offset by remember {
-        mutableFloatStateOf(0f)
+    var horizontalOffset by remember { mutableFloatStateOf(0f) }
+    val forecastList = forecasts.collectAsState()
+    val selectedForecast = selected.collectAsState()
+    val sizeHorizontal = with(LocalDensity.current) {
+        LocalConfiguration.current.screenWidthDp.dp.toPx()
     }
-
-    var selectedForecast by remember {
-        mutableStateOf<Forecast?>(null)
-    }
-
-    var forecastList by remember {
-        mutableStateOf<List<Forecast>?>(null)
-    }
-
-    LaunchedEffect(forecasts) {
-        forecasts
-            .filterNotNull()
-            .collectLatest { list ->
-                selectedForecast = selectedForecast?.let {
-                    list.find { forecast ->
-                        selectedForecast?.cityName == forecast.cityName
-                    }
-                } ?: list.getOrNull(selected)
-                forecastList = list
-            }
-    }
-    val size = with(LocalDensity.current) { LocalConfiguration.current.screenHeightDp.dp.toPx() }
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .pointerInput(Unit) {
-                detectVerticalDragGestures(
-                    onDragEnd = { offset = 0f },
-                    onDragCancel = { offset = 0f }) { change, dragAmount ->
-                    offset += dragAmount
-                    Log.d("swipe", offset.toString())
-                    if (offset < 0 && abs(offset) > size * 0.1) {
-                        offset = 0f
-                        navController.navigate(Screen.ExtendedWeatherScreen.withArgs(selected.toString()))
-                    }
-                }
-            }
             .background(
                 Brush.verticalGradient(
                     listOf(
@@ -115,28 +82,58 @@ fun WeatherScreen(
                 )
             )
             .padding(16.dp)
+            .pointerInput(Unit) {
+                detectHorizontalDragGestures(
+                    onDragEnd = { horizontalOffset = 0f },
+                    onDragCancel = { horizontalOffset = 0f },
+                    onHorizontalDrag = { change, dragAmount ->
+                        horizontalOffset += dragAmount
+                        if (abs(horizontalOffset) > sizeHorizontal * 0.15) {
+                            if (horizontalOffset > 0) {
+                                switchForecast(selectedForecast.value, false)
+                            } else {
+                                switchForecast(selectedForecast.value, true)
+                            }
+                            horizontalOffset = 0f
+                        }
+                    })
+            }
     ) {
         Column {
+
             TopBar(
                 modifier = Modifier.fillMaxWidth(),
-                selectedForecast?.cityName ?: "",
-            ) { navController.navigate(Screen.CityScreen.route){
-                popUpTo(Screen.MainScreen.route+"/${selected}") {
-                    inclusive = true
-                }
-            } }
+                cityName = selectedForecast.value?.cityName ?: "",
+                onMenuClick = {
+                    navController.navigate(Screen.CityScreen.route) {
+                        popUpTo(Screen.MainScreen.route) {
+                            inclusive = true
+                        }
+                    }
+                })
+
             Spacer(modifier = Modifier.height(8.dp))
-            CityCount(Modifier.align(Alignment.CenterHorizontally), selectedForecast, forecastList)
+
+            CityCount(
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+                selectedForecast = selectedForecast.value,
+                forecastList = forecastList.value
+            )
+
         }
+
         TemperatureInfo(
-            Modifier
+            modifier = Modifier
                 .align(Alignment.CenterStart),
-            selectedForecast?.weather,
-            selectedForecast?.main,
-            selectedForecast?.cityInfo
+            weather = selectedForecast.value?.weather,
+            mainWeather = selectedForecast.value?.main,
+            city = selectedForecast.value?.cityInfo
         )
-        ShortForecast(Modifier.align(Alignment.BottomCenter))
-        { navController.navigate(Screen.ExtendedWeatherScreen.withArgs(selected.toString())) }
+
+        ShortForecast(
+            modifier = Modifier.align(Alignment.BottomCenter),
+            onDetailedClick = { navController.navigate(Screen.ExtendedWeatherScreen.route) })
+
     }
 }
 
@@ -170,72 +167,6 @@ fun ShortForecast(
         )
     }
 
-}
-
-@Composable
-fun WeatherItem(modifier: Modifier = Modifier, dayWeather: DayWeather?, index: Int) {
-    Row(modifier, horizontalArrangement = Arrangement.SpaceBetween) {
-        Row {
-            Image(
-                painter = painterResource(
-                    id = iconFromWeatherType(
-                        dayWeather?.weather?.type,
-                        null,
-                        null
-                    )
-                ),
-                contentDescription = null,
-                modifier = Modifier.align(
-                    Alignment.CenterVertically
-                )
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = dayWeather.dayOfWeak(index),
-                color = Color.White,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Light,
-                modifier = Modifier.align(
-                    Alignment.CenterVertically
-                )
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = dayWeather?.weather?.description ?: "",
-                color = Color.White,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Light,
-                modifier = Modifier.align(
-                    Alignment.CenterVertically
-                )
-            )
-        }
-
-        Text(
-            text = "${dayWeather?.mainWeather?.temperatureMin}°С/${dayWeather?.mainWeather?.temperatureMax}°С",
-            color = Color.White,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Light,
-            modifier = Modifier.align(
-                Alignment.CenterVertically
-            )
-        )
-    }
-
-}
-
-private fun DayWeather?.dayOfWeak(index: Int): String {
-    if (this == null) return ""
-    val date = Calendar.getInstance()
-    return when ((date.get(Calendar.DAY_OF_WEEK) - 1 + index) % 7) {
-        0 -> "Пн"
-        1 -> "Вт"
-        2 -> "Ср"
-        3 -> "Чт"
-        4 -> "Пт"
-        5 -> "Сб"
-        else -> "Вс"
-    }
 }
 
 @Composable
@@ -274,7 +205,10 @@ fun TopBar(
 
 @Composable
 fun CityCount(modifier: Modifier, selectedForecast: Forecast?, forecastList: List<Forecast>?) {
-    LazyRow(modifier = modifier, content = {
+
+    val state = rememberLazyListState()
+
+    LazyRow(modifier = modifier, state = state, content = {
         items(forecastList?.size ?: 0) {
             Box(
                 Modifier
@@ -289,23 +223,6 @@ fun CityCount(modifier: Modifier, selectedForecast: Forecast?, forecastList: Lis
     })
 }
 
-fun iconFromWeatherType(weatherType: WeatherType?, sunrise: Long?, sunset: Long?): Int {
-    if (weatherType == null) return R.drawable.clear
-    return when (weatherType) {
-        WeatherType.CLEAR ->
-            if (sunrise == null || sunset == null || System.currentTimeMillis() in sunrise..sunset) {
-                R.drawable.clear
-            } else {
-                R.drawable.clear_night
-            }
-
-        WeatherType.RAIN -> R.drawable.rain
-        WeatherType.SNOW -> R.drawable.snow
-        WeatherType.CLOUDS -> R.drawable.clouds
-        WeatherType.DRIZZLE -> R.drawable.drizzle
-        WeatherType.THUNDERSTORM -> R.drawable.thunderstorm
-    }
-}
 
 @Composable
 fun TemperatureInfo(

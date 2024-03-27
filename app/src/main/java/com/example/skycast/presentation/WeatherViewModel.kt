@@ -30,14 +30,39 @@ class WeatherViewModel @Inject constructor(
     private val _forecasts = MutableStateFlow<List<Forecast>?>(null)
     val forecasts = _forecasts.asStateFlow()
 
+    private val _selectedForecast = MutableStateFlow<Forecast?>(null)
+    val selectedForecast = _selectedForecast.asStateFlow()
+
+
+    fun switchForecast(currentForecast: Forecast?, next: Boolean = true) {
+        viewModelScope.launch(Dispatchers.Default) {
+            val list = _forecasts.value ?: return@launch
+            val index = list.indexOf(currentForecast)
+            if (index == -1) return@launch
+            if (next) {
+                if (index < list.lastIndex) {
+                    _selectedForecast.update { list[index + 1] }
+                }
+            } else {
+                if (index > 0) {
+                    _selectedForecast.update { list[index - 1] }
+                }
+            }
+        }
+    }
+
+
     fun getForecast() {
-        viewModelScope.launch(Dispatchers.Main) {
+        viewModelScope.launch(Dispatchers.Default) {
             val list = forecastRepository.getAllForecasts()
             if (list.isEmpty()) {
                 _hasCities.emit(false)
             } else {
                 _forecasts.update {
                     list
+                }
+                _selectedForecast.update {
+                    list[0]
                 }
                 _hasCities.emit(true)
             }
@@ -61,12 +86,18 @@ class WeatherViewModel @Inject constructor(
                     }
                 }
             }.join()
+            updatedForecast.sortBy { it.date }
+            val currentForecast = _selectedForecast.value
+            val index = updatedForecast.indexOfFirst {
+                it.cityName == currentForecast?.cityName
+            }
+            _selectedForecast.update { if (index != -1) updatedForecast[index] else updatedForecast.firstOrNull() }
             _forecasts.update { updatedForecast }
         }
     }
 
     fun addCity(cityName: String) {
-        viewModelScope.launch(Dispatchers.Main) {
+        viewModelScope.launch(Dispatchers.Default) {
             val response = weatherApiRepository.getForecast(
                 cityName, "dc8ecec968c5f0fa2162b50eb1cce678",
                 "metric",
