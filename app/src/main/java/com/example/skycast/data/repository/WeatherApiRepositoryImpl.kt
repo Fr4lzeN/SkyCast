@@ -17,11 +17,13 @@ class WeatherApiRepositoryImpl(
 ) : WeatherApiRepository {
     override suspend fun getForecast(
         cityName: String,
-        apikey: String,
-        units: String,
-        language: String
     ): Result<Forecast> {
-        val response = weatherApi.getWeather(cityName, apikey, units, language)
+        val response =
+            weatherApi.getWeather(
+                cityName, "dc8ecec968c5f0fa2162b50eb1cce678",
+                "metric",
+                "ru"
+            )
         if (response.isSuccessful) {
             return Result.success(response.body()!!.toDomain())
         }
@@ -31,23 +33,19 @@ class WeatherApiRepositoryImpl(
     override suspend fun getForecast(
         longitude: Double,
         latitude: Double,
-        apikey: String,
-        units: String,
-        language: String
     ): Result<Forecast> {
-        val response = weatherApi.getWeather(latitude, longitude, apikey, units, language)
+        val response = weatherApi.getWeather(
+            latitude,
+            longitude,
+            "dc8ecec968c5f0fa2162b50eb1cce678",
+            "metric",
+            "ru"
+        )
         if (response.isSuccessful) {
             return Result.success(response.body()!!.toDomain())
         }
         return Result.failure(Throwable(response.message()))
     }
-
-
-    // настроить appModule
-    //сделать App
-    // сохранить apikey
-    //
-
 
     private fun ForecastDTO.toDomain(): Forecast {
         return Forecast(

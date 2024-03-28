@@ -52,6 +52,10 @@ class WeatherViewModel @Inject constructor(
     }
 
 
+    fun selectForecast(forecast: Forecast) {
+        _selectedForecast.update { forecast }
+    }
+
     fun getForecast() {
         viewModelScope.launch(Dispatchers.Default) {
             val list = forecastRepository.getAllForecasts()
@@ -66,17 +70,18 @@ class WeatherViewModel @Inject constructor(
                 }
                 _hasCities.emit(true)
             }
+            updateForecast()
+        }
+    }
+
+    fun updateForecast() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val list = _forecasts.value ?: return@launch
             val updatedForecast = mutableListOf<Forecast>()
             launch {
                 list.forEach {
-
                     launch {
-                        val response = weatherApiRepository.getForecast(
-                            it.cityName,
-                            "dc8ecec968c5f0fa2162b50eb1cce678",
-                            "metric",
-                            "ru"
-                        )
+                        val response = weatherApiRepository.getForecast(it.cityName)
                         if (response.isSuccess) {
                             val forecast = response.getOrThrow()
                             updatedForecast.add(forecast.copy(date = it.date))
@@ -91,17 +96,33 @@ class WeatherViewModel @Inject constructor(
             val index = updatedForecast.indexOfFirst {
                 it.cityName == currentForecast?.cityName
             }
-            _selectedForecast.update { if (index != -1) updatedForecast[index] else updatedForecast.firstOrNull() }
+            _selectedForecast.update {
+                if (index != -1) {
+                    updatedForecast[index]
+                } else {
+                    updatedForecast.firstOrNull()
+                }
+            }
             _forecasts.update { updatedForecast }
+        }
+    }
+
+
+    fun deleteForecast(forecast: Forecast) {
+        _forecasts.update {
+            val list = it?.toMutableList()
+            list?.remove(forecast)
+            list
+        }
+        if (_selectedForecast.value == forecast) {
+            _selectedForecast.update { _forecasts.value?.firstOrNull() }
         }
     }
 
     fun addCity(cityName: String) {
         viewModelScope.launch(Dispatchers.Default) {
             val response = weatherApiRepository.getForecast(
-                cityName, "dc8ecec968c5f0fa2162b50eb1cce678",
-                "metric",
-                "ru"
+                cityName,
             )
             if (response.isSuccess) {
                 val forecast = response.getOrThrow()

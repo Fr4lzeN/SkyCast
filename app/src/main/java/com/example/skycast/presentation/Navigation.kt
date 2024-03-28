@@ -44,7 +44,9 @@ fun Navigation() {
                 navController = navController,
                 viewModel.forecasts,
                 viewModel.errorMessage,
-                viewModel::addCity
+                viewModel::addCity,
+                viewModel::deleteForecast,
+                viewModel::selectForecast,
             )
         }
         composable(route = Screen.ExtendedWeatherScreen.route) {
