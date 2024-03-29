@@ -1,6 +1,5 @@
 package com.example.skycast.presentation
 
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -29,7 +28,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDismissState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -41,8 +39,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -56,8 +52,6 @@ import com.example.skycast.domain.model.Forecast
 import com.example.skycast.domain.model.MainWeather
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.filterNotNull
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -70,21 +64,11 @@ fun CityScreen(
     selectCity: (Forecast) -> Unit
 ) {
 
-    var forecastsList by remember {
-        mutableStateOf<List<Forecast>?>(null)
-    }
+    val forecastsList = forecasts.collectAsState()
 
     val error = errorMessage.collectAsState(initial = null)
 
     ShowError(error.value)
-
-    LaunchedEffect(forecasts) {
-        forecasts
-            .filterNotNull()
-            .collectLatest {
-                forecastsList = it
-            }
-    }
 
     Column(
         Modifier
@@ -99,9 +83,6 @@ fun CityScreen(
             )
             .padding(16.dp)
     ) {
-        val sizeHorizontal = with(LocalDensity.current) {
-            LocalConfiguration.current.screenWidthDp.dp.toPx()
-        }
         Spacer(modifier = Modifier.height(16.dp))
         Text(
             text = "Управление городами",
@@ -114,14 +95,15 @@ fun CityScreen(
         SearchCity(Modifier.fillMaxWidth(), addCity)
         Spacer(modifier = Modifier.height(32.dp))
         LazyColumn {
-            items(forecastsList?.size ?: 0) { index ->
+            items(forecastsList.value?.size ?: 0, key = {
+                forecastsList.value!![it].cityName
+            }) { index ->
                 val dismiss = rememberDismissState(
                     DismissValue.Default, positionalThreshold = {
-                        if (it > sizeHorizontal * 0.25) sizeHorizontal * 0.4f
-                        else 0f
+                        it * 0.4f
                     }, confirmValueChange = { dismissValue ->
                         if (dismissValue == DismissValue.DismissedToStart) {
-                            deleteCity(forecastsList!![index])
+                            deleteCity(forecastsList.value!![index])
                         }
                         true
                     }
@@ -154,10 +136,8 @@ fun CityScreen(
                                 .size(32.dp)
                                 .align(
                                     Alignment.CenterEnd
-                                )
-                                .clickable {
-                                    Log.d("dismiss", "delete")
-                                }, colorFilter = ColorFilter.tint(imageColor)
+                                ),
+                            colorFilter = ColorFilter.tint(imageColor)
                         )
                     }
                 }, dismissContent = {
@@ -165,15 +145,15 @@ fun CityScreen(
                         Modifier
                             .fillMaxWidth()
                             .clickable {
-                                selectCity(forecastsList!![index])
+                                selectCity(forecastsList.value!![index])
                                 navController.navigate(Screen.MainScreen.route) {
                                     popUpTo(Screen.CityScreen.route) {
                                         inclusive = true
                                     }
                                 }
                             },
-                        forecastsList!![index].cityName,
-                        forecastsList!![index].main
+                        forecastsList.value!![index].cityName,
+                        forecastsList.value!![index].main
                     )
                 }, directions = setOf(DismissDirection.EndToStart))
 

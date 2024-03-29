@@ -104,19 +104,26 @@ class WeatherViewModel @Inject constructor(
                 }
             }
             _forecasts.update { updatedForecast }
+            launch { forecastRepository.insertAllForecasts(updatedForecast) }
         }
     }
 
 
     fun deleteForecast(forecast: Forecast) {
-        _forecasts.update {
-            val list = it?.toMutableList()
-            list?.remove(forecast)
-            list
+        viewModelScope.launch(Dispatchers.Default) {
+            var list: MutableList<Forecast>
+            _forecasts.update {
+                if (it == null) return@update it
+                list = it.toMutableList()
+                list.remove(forecast)
+                list
+            }
+            if (_selectedForecast.value == forecast) {
+                _selectedForecast.update { null }
+            }
+            launch { forecastRepository.deleteForecast(forecast.cityName) }
         }
-        if (_selectedForecast.value == forecast) {
-            _selectedForecast.update { _forecasts.value?.firstOrNull() }
-        }
+
     }
 
     fun addCity(cityName: String) {
