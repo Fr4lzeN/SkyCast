@@ -56,4 +56,3 @@ fun WaitingScreen(navController: NavHostController, hasCities: SharedFlow<Boolea
         )
     }
 }
-

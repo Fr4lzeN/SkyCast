@@ -65,9 +65,7 @@ fun CityScreen(
 ) {
 
     val forecastsList = forecasts.collectAsState()
-
     val error = errorMessage.collectAsState(initial = null)
-
     ShowError(error.value)
 
     Column(
@@ -165,13 +163,10 @@ fun CityScreen(
 
 @Composable
 fun ShowError(message: String?) {
-
     var haveDismiss by remember {
         mutableStateOf(false)
     }
-
     if (haveDismiss) return
-
     if (message != null) {
         AlertDialog(
             onDismissRequest = { haveDismiss = true },
@@ -219,10 +214,8 @@ fun CityInfo(modifier: Modifier, cityName: String, weather: MainWeather) {
             modifier = Modifier.align(Alignment.CenterVertically)
         )
     }
-
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchCity(modifier: Modifier, addCity: (String) -> Unit) {
     var cityName by remember { mutableStateOf("") }
@@ -247,12 +240,4 @@ fun SearchCity(modifier: Modifier, addCity: (String) -> Unit) {
             addCity(cityName)
         }),
     )
-
 }
-
-/*
-@Preview
-@Composable
-fun PreviewCity() {
-    CityScreen(rememberNavController(), )
-}*/
