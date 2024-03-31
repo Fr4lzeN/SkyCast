@@ -71,24 +71,37 @@ fun WeatherScreen(
     val forecastList = forecasts.collectAsState()
     val selectedForecast = selected.collectAsState()
     var swipeDirection by remember { mutableStateOf(SwipeDirection.RIGHT) }
+    var forecastWasSwitched by remember {
+        mutableStateOf(false)
+    }
     val sizeHorizontal = with(LocalDensity.current) {
         LocalConfiguration.current.screenWidthDp.dp.toPx()
     }
     Scaffold(modifier = Modifier
         .pointerInput(Unit) {
             detectHorizontalDragGestures(
-                onDragEnd = { horizontalOffset = 0f },
-                onDragCancel = { horizontalOffset = 0f },
+                onDragEnd = {
+                    horizontalOffset = 0f
+                    forecastWasSwitched = false
+                },
+                onDragCancel = {
+                    horizontalOffset = 0f
+                    forecastWasSwitched = false
+                },
                 onHorizontalDrag = { _, dragAmount ->
                     horizontalOffset += dragAmount
-                    calculateSwitch(horizontalOffset, sizeHorizontal)?.let { direction ->
-                        swipeDirection = direction
-                        switchForecast(
-                            selectedForecast.value,
-                            direction == SwipeDirection.RIGHT
-                        )
-                        horizontalOffset = 0f
+                    if (!forecastWasSwitched) {
+                        calculateSwitch(horizontalOffset, sizeHorizontal)?.let { direction ->
+                            forecastWasSwitched=true
+                            swipeDirection = direction
+                            switchForecast(
+                                selectedForecast.value,
+                                direction == SwipeDirection.RIGHT
+                            )
+                            horizontalOffset = 0f
+                        }
                     }
+
                 })
         },
         topBar = {
