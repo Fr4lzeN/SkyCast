@@ -1,7 +1,9 @@
 package com.example.skycast.presentation
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -57,6 +59,7 @@ import com.example.skycast.domain.model.Weather
 import com.example.skycast.presentation.ui.AlphaAnimationScope
 import com.example.skycast.presentation.ui.AnimateHorizontalSlide
 import kotlinx.coroutines.flow.StateFlow
+import java.util.Locale
 import kotlin.math.abs
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -92,7 +95,7 @@ fun WeatherScreen(
                     horizontalOffset += dragAmount
                     if (!forecastWasSwitched) {
                         calculateSwitch(horizontalOffset, sizeHorizontal)?.let { direction ->
-                            forecastWasSwitched=true
+                            forecastWasSwitched = true
                             swipeDirection = direction
                             switchForecast(
                                 selectedForecast.value,
@@ -220,6 +223,7 @@ fun CityCount(modifier: Modifier, selectedForecast: Forecast?, forecastList: Lis
     })
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TemperatureInfo(
     modifier: Modifier = Modifier,
@@ -239,8 +243,16 @@ fun TemperatureInfo(
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = weather?.description ?: "",
-                Modifier.align(Alignment.CenterVertically),
+                text = weather?.description?.replaceFirstChar {
+                    if (it.isLowerCase()) it.titlecase(
+                        Locale.getDefault()
+                    ) else it.toString()
+                }
+                    ?: "",
+                maxLines = 1,
+                modifier = Modifier
+                    .align(Alignment.CenterVertically)
+                    .basicMarquee(),
                 fontSize = 40.sp,
                 color = Color.White,
                 fontWeight = FontWeight.Light
