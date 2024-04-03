@@ -11,40 +11,50 @@ import com.example.skycast.domain.model.MainWeather
 import com.example.skycast.domain.model.Weather
 import com.example.skycast.domain.model.Wind
 import com.example.skycast.domain.repository.WeatherApiRepository
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class WeatherApiRepositoryImpl(
     private val weatherApi: WeatherApi,
+    private val coroutinesDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : WeatherApiRepository {
     override suspend fun getForecast(
         cityName: String,
     ): Result<Forecast> {
-        val response =
-            weatherApi.getWeather(
-                cityName, "dc8ecec968c5f0fa2162b50eb1cce678",
-                "metric",
-                "ru"
-            )
-        if (response.isSuccessful) {
-            return Result.success(response.body()!!.toDomain())
+        return withContext(coroutinesDispatcher) {
+            val response =
+                weatherApi.getWeather(
+                    cityName, "dc8ecec968c5f0fa2162b50eb1cce678",
+                    "metric",
+                    "ru"
+                )
+            if (response.isSuccessful) {
+                return@withContext Result.success(response.body()!!.toDomain())
+            }
+            return@withContext Result.failure(Throwable(response.message()))
         }
-        return Result.failure(Throwable(response.message()))
+
     }
 
     override suspend fun getForecast(
         longitude: Double,
         latitude: Double,
     ): Result<Forecast> {
-        val response = weatherApi.getWeather(
-            latitude,
-            longitude,
-            "dc8ecec968c5f0fa2162b50eb1cce678",
-            "metric",
-            "ru"
-        )
-        if (response.isSuccessful) {
-            return Result.success(response.body()!!.toDomain())
+        return withContext(coroutinesDispatcher) {
+            val response = weatherApi.getWeather(
+                latitude,
+                longitude,
+                "dc8ecec968c5f0fa2162b50eb1cce678",
+                "metric",
+                "ru"
+            )
+            if (response.isSuccessful) {
+                return@withContext Result.success(response.body()!!.toDomain())
+            }
+            return@withContext Result.failure(Throwable(response.message()))
         }
-        return Result.failure(Throwable(response.message()))
+
     }
 
     private fun ForecastDTO.toDomain(): Forecast {
