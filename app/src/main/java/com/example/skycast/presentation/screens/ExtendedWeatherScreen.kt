@@ -1,4 +1,4 @@
-package com.example.skycast.presentation
+package com.example.skycast.presentation.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background

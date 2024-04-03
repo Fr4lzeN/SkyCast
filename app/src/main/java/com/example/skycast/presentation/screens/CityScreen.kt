@@ -1,5 +1,6 @@
-package com.example.skycast.presentation
+package com.example.skycast.presentation.screens
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -14,11 +15,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DismissDirection
+import androidx.compose.material3.DismissState
 import androidx.compose.material3.DismissValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.OutlinedTextField
@@ -50,6 +53,7 @@ import androidx.navigation.NavHostController
 import com.example.skycast.R
 import com.example.skycast.domain.model.Forecast
 import com.example.skycast.domain.model.MainWeather
+import com.example.skycast.presentation.Screen
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -93,15 +97,15 @@ fun CityScreen(
         SearchCity(Modifier.fillMaxWidth(), addCity)
         Spacer(modifier = Modifier.height(32.dp))
         LazyColumn {
-            items(forecastsList.value?.size ?: 0, key = {
-                forecastsList.value!![it].cityName
-            }) { index ->
+            items(
+                items = forecastsList.value ?: emptyList<Forecast>(),
+                key = { it.cityName }) { forecast ->
                 val dismiss = rememberDismissState(
                     DismissValue.Default, positionalThreshold = {
                         it * 0.4f
                     }, confirmValueChange = { dismissValue ->
                         if (dismissValue == DismissValue.DismissedToStart) {
-                            deleteCity(forecastsList.value!![index])
+                            deleteCity(forecast)
                         }
                         true
                     }
@@ -143,15 +147,15 @@ fun CityScreen(
                         Modifier
                             .fillMaxWidth()
                             .clickable {
-                                selectCity(forecastsList.value!![index])
+                                selectCity(forecast)
                                 navController.navigate(Screen.MainScreen.route) {
                                     popUpTo(Screen.CityScreen.route) {
                                         inclusive = true
                                     }
                                 }
                             },
-                        forecastsList.value!![index].cityName,
-                        forecastsList.value!![index].main
+                        forecast.cityName,
+                        forecast.main
                     )
                 }, directions = setOf(DismissDirection.EndToStart))
 

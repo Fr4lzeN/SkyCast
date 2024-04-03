@@ -11,6 +11,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.skycast.presentation.screens.CityScreen
+import com.example.skycast.presentation.screens.ExtendedWeatherScreen
+import com.example.skycast.presentation.screens.WaitingScreen
+import com.example.skycast.presentation.screens.WeatherScreen
+import com.example.skycast.presentation.view_models.WeatherViewModel
 
 @Composable
 fun Navigation() {

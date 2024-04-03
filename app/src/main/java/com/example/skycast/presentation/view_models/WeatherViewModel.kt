@@ -1,4 +1,4 @@
-package com.example.skycast.presentation
+package com.example.skycast.presentation.view_models
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -50,7 +50,6 @@ class WeatherViewModel @Inject constructor(
             }
         }
     }
-
 
     fun selectForecast(forecast: Forecast) {
         _selectedForecast.update { forecast }
@@ -108,12 +107,11 @@ class WeatherViewModel @Inject constructor(
         }
     }
 
-
     fun deleteForecast(forecast: Forecast) {
         viewModelScope.launch(Dispatchers.Default) {
             var list: MutableList<Forecast>
             _forecasts.update {
-                if (it == null) return@update it
+                if (it == null) return@update null
                 list = it.toMutableList()
                 list.remove(forecast)
                 list
@@ -123,7 +121,6 @@ class WeatherViewModel @Inject constructor(
             }
             launch { forecastRepository.deleteForecast(forecast.cityName) }
         }
-
     }
 
     fun addCity(cityName: String) {

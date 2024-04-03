@@ -1,4 +1,4 @@
-package com.example.skycast.presentation
+package com.example.skycast.presentation.screens
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
@@ -56,6 +56,7 @@ import com.example.skycast.domain.model.City
 import com.example.skycast.domain.model.Forecast
 import com.example.skycast.domain.model.MainWeather
 import com.example.skycast.domain.model.Weather
+import com.example.skycast.presentation.Screen
 import com.example.skycast.presentation.ui.AlphaAnimationScope
 import com.example.skycast.presentation.ui.AnimateHorizontalSlide
 import kotlinx.coroutines.flow.StateFlow
@@ -74,9 +75,6 @@ fun WeatherScreen(
     val forecastList = forecasts.collectAsState()
     val selectedForecast = selected.collectAsState()
     var swipeDirection by remember { mutableStateOf(SwipeDirection.RIGHT) }
-    var forecastWasSwitched by remember {
-        mutableStateOf(false)
-    }
     val sizeHorizontal = with(LocalDensity.current) {
         LocalConfiguration.current.screenWidthDp.dp.toPx()
     }
@@ -85,26 +83,22 @@ fun WeatherScreen(
             detectHorizontalDragGestures(
                 onDragEnd = {
                     horizontalOffset = 0f
-                    forecastWasSwitched = false
                 },
                 onDragCancel = {
+                    calculateSwipeDirection(
+                        horizontalOffset,
+                        sizeHorizontal
+                    )?.let { direction ->
+                        swipeDirection = direction
+                        switchForecast(
+                            selectedForecast.value,
+                            direction == SwipeDirection.RIGHT
+                        )
+                    }
                     horizontalOffset = 0f
-                    forecastWasSwitched = false
                 },
                 onHorizontalDrag = { _, dragAmount ->
                     horizontalOffset += dragAmount
-                    if (!forecastWasSwitched) {
-                        calculateSwitch(horizontalOffset, sizeHorizontal)?.let { direction ->
-                            forecastWasSwitched = true
-                            swipeDirection = direction
-                            switchForecast(
-                                selectedForecast.value,
-                                direction == SwipeDirection.RIGHT
-                            )
-                            horizontalOffset = 0f
-                        }
-                    }
-
                 })
         },
         topBar = {
@@ -184,7 +178,7 @@ fun WeatherScreen(
     }
 }
 
-fun calculateSwitch(horizontalOffset: Float, sizeHorizontal: Float): SwipeDirection? {
+fun calculateSwipeDirection(horizontalOffset: Float, sizeHorizontal: Float): SwipeDirection? {
     if (abs(horizontalOffset) > sizeHorizontal * 0.15) {
         return if (horizontalOffset < 0) SwipeDirection.RIGHT else SwipeDirection.LEFT
     }
