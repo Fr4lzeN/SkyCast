@@ -8,6 +8,10 @@ import com.example.skycast.data.repository.ForecastRepositoryImpl
 import com.example.skycast.data.repository.WeatherApiRepositoryImpl
 import com.example.skycast.domain.repository.ForecastRepository
 import com.example.skycast.domain.repository.WeatherApiRepository
+import com.example.skycast.domain.use_case.AddCityUseCase
+import com.example.skycast.domain.use_case.DeleteCityUseCase
+import com.example.skycast.domain.use_case.DownloadForecastsUseCase
+import com.example.skycast.domain.use_case.GetSavedForecastsUseCase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -49,4 +53,29 @@ object AppModule {
     fun provideWeatherApiRepository(weatherApi: WeatherApi): WeatherApiRepository{
         return WeatherApiRepositoryImpl(weatherApi)
     }
+
+    @Singleton
+    @Provides
+    fun provideAddCityUseCase(weatherApiRepository: WeatherApiRepository, forecastRepository: ForecastRepository):AddCityUseCase{
+        return AddCityUseCase(weatherApiRepository, forecastRepository)
+    }
+
+    @Singleton
+    @Provides
+    fun provideDeleteCityUseCase(forecastRepository: ForecastRepository): DeleteCityUseCase{
+        return DeleteCityUseCase(forecastRepository)
+    }
+
+    @Provides
+    @Singleton
+    fun provideDownloadForecastsUseCase(weatherApiRepository: WeatherApiRepository,forecastRepository: ForecastRepository): DownloadForecastsUseCase{
+        return DownloadForecastsUseCase(weatherApiRepository, forecastRepository)
+    }
+
+    @Provides
+    @Singleton
+    fun provideGetSavedForecastsUseCase(forecastRepository: ForecastRepository): GetSavedForecastsUseCase{
+        return GetSavedForecastsUseCase(forecastRepository)
+    }
+
 }

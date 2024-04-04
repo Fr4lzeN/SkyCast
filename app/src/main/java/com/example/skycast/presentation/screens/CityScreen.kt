@@ -1,6 +1,5 @@
 package com.example.skycast.presentation.screens
 
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -21,7 +20,6 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DismissDirection
-import androidx.compose.material3.DismissState
 import androidx.compose.material3.DismissValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.OutlinedTextField
@@ -53,6 +51,7 @@ import androidx.navigation.NavHostController
 import com.example.skycast.R
 import com.example.skycast.domain.model.Forecast
 import com.example.skycast.domain.model.MainWeather
+import com.example.skycast.domain.use_case.AddCityUseCase
 import com.example.skycast.presentation.Screen
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -62,7 +61,7 @@ import kotlinx.coroutines.flow.StateFlow
 fun CityScreen(
     navController: NavHostController,
     forecasts: StateFlow<List<Forecast>?>,
-    errorMessage: SharedFlow<String>,
+    errorMessage: SharedFlow<AddCityUseCase.AddCityError>,
     addCity: (String) -> Unit,
     deleteCity: (Forecast) -> Unit,
     selectCity: (Forecast) -> Unit
@@ -166,7 +165,7 @@ fun CityScreen(
 }
 
 @Composable
-fun ShowError(message: String?) {
+fun ShowError(message: AddCityUseCase.AddCityError?) {
     var haveDismiss by remember {
         mutableStateOf(false)
     }
@@ -176,7 +175,14 @@ fun ShowError(message: String?) {
             onDismissRequest = { haveDismiss = true },
             confirmButton = {},
             title = { Text(text = "Ошибка") },
-            text = { Text(text = message) },
+            text = {
+                Text(
+                    text = when (message) {
+                        AddCityUseCase.AddCityError.WRONG_NAME -> "Мы не можем найти этот город"
+                        AddCityUseCase.AddCityError.ALREADY_EXISTS -> "Этот город уже сохранен"
+                    }
+                )
+            },
             dismissButton = {
                 TextButton(onClick = { haveDismiss = true }) {
                     Text(text = "Закрыть")

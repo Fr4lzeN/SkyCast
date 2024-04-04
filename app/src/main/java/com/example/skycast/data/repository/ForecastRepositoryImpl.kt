@@ -3,7 +3,6 @@ package com.example.skycast.data.repository
 import com.example.skycast.data.data_source.dao.ForecastDao
 import com.example.skycast.domain.model.Forecast
 import com.example.skycast.domain.repository.ForecastRepository
-import kotlinx.coroutines.CloseableCoroutineDispatcher
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

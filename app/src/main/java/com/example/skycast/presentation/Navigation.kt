@@ -45,7 +45,7 @@ fun Navigation() {
                 )
             }) {
             viewModel.getForecast()
-            WaitingScreen(navController, viewModel.hasCities)
+            WaitingScreen(navController, viewModel.forecasts)
         }
 
         composable(route = Screen.MainScreen.route,

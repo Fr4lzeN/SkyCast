@@ -3,8 +3,10 @@ package com.example.skycast.presentation.view_models
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.skycast.domain.model.Forecast
-import com.example.skycast.domain.repository.ForecastRepository
-import com.example.skycast.domain.repository.WeatherApiRepository
+import com.example.skycast.domain.use_case.AddCityUseCase
+import com.example.skycast.domain.use_case.DeleteCityUseCase
+import com.example.skycast.domain.use_case.DownloadForecastsUseCase
+import com.example.skycast.domain.use_case.GetSavedForecastsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -17,14 +19,14 @@ import javax.inject.Inject
 
 @HiltViewModel
 class WeatherViewModel @Inject constructor(
-    private val weatherApiRepository: WeatherApiRepository,
-    private val forecastRepository: ForecastRepository,
+    private val addCityUseCase: AddCityUseCase,
+    private val deleteCityUseCase: DeleteCityUseCase,
+    private val downloadForecastsUseCase: DownloadForecastsUseCase,
+    private val getSavedForecastsUseCase: GetSavedForecastsUseCase,
 ) : ViewModel() {
 
-    private val _hasCities = MutableStateFlow<Boolean?>(null)
-    val hasCities = _hasCities.asSharedFlow()
 
-    private val _errorMessage = MutableSharedFlow<String>()
+    private val _errorMessage = MutableSharedFlow<AddCityUseCase.AddCityError>()
     val errorMessage = _errorMessage.asSharedFlow()
 
     private val _forecasts = MutableStateFlow<List<Forecast>?>(null)
@@ -56,94 +58,41 @@ class WeatherViewModel @Inject constructor(
     }
 
     fun getForecast() {
-        viewModelScope.launch(Dispatchers.Default) {
-            val list = forecastRepository.getAllForecasts()
-            if (list.isEmpty()) {
-                _hasCities.emit(false)
-            } else {
-                _forecasts.update {
-                    list
-                }
-                _selectedForecast.update {
-                    list[0]
-                }
-                _hasCities.emit(true)
+        viewModelScope.launch {
+            val savedForecasts = getSavedForecastsUseCase.execute()
+            _forecasts.update {
+                savedForecasts
             }
+            _selectedForecast.update { savedForecasts.firstOrNull() }
             updateForecast()
         }
     }
 
     fun updateForecast() {
-        viewModelScope.launch(Dispatchers.IO) {
-            val list = _forecasts.value ?: return@launch
-            val updatedForecast = mutableListOf<Forecast>()
-            launch {
-                list.forEach {
-                    launch {
-                        val response = weatherApiRepository.getForecast(it.cityName)
-                        if (response.isSuccess) {
-                            val forecast = response.getOrThrow()
-                            updatedForecast.add(forecast.copy(date = it.date))
-                        } else {
-                            updatedForecast.add(it)
-                        }
-                    }
-                }
-            }.join()
-            updatedForecast.sortBy { it.date }
-            val currentForecast = _selectedForecast.value
-            val index = updatedForecast.indexOfFirst {
-                it.cityName == currentForecast?.cityName
+        viewModelScope.launch {
+            _forecasts.update {
+                downloadForecastsUseCase.execute(_forecasts.value)
             }
-            _selectedForecast.update {
-                if (index != -1) {
-                    updatedForecast[index]
-                } else {
-                    updatedForecast.firstOrNull()
-                }
-            }
-            _forecasts.update { updatedForecast }
-            launch { forecastRepository.insertAllForecasts(updatedForecast) }
         }
     }
 
     fun deleteForecast(forecast: Forecast) {
-        viewModelScope.launch(Dispatchers.Default) {
-            var list: MutableList<Forecast>
-            _forecasts.update {
-                if (it == null) return@update null
-                list = it.toMutableList()
-                list.remove(forecast)
-                list
+        viewModelScope.launch {
+            val updatedForecasts = deleteCityUseCase.execute(forecast, _forecasts.value)
+            if (forecast == _selectedForecast.value) {
+                _selectedForecast.update { updatedForecasts.firstOrNull() }
             }
-            if (_selectedForecast.value == forecast) {
-                _selectedForecast.update { null }
-            }
-            launch { forecastRepository.deleteForecast(forecast.cityName) }
+            _forecasts.update { updatedForecasts }
         }
     }
 
     fun addCity(cityName: String) {
-        viewModelScope.launch(Dispatchers.Default) {
-            val response = weatherApiRepository.getForecast(
-                cityName,
-            )
-            if (response.isSuccess) {
-                val forecast = response.getOrThrow()
-                launch { forecastRepository.insertForecast(forecast) }
-                if (_forecasts.value?.indexOfFirst {
-                        forecast.cityName == it.cityName
-                    } != -1) {
-                    _errorMessage.emit("Этот город уже сохранен")
-                    return@launch
-                }
-                _forecasts.update {
-                    val list = it?.toMutableList()
-                    list?.add(forecast)
-                    list
-                }
-            } else {
-                _errorMessage.emit("Ошибка, попробуйте позже")
+        viewModelScope.launch {
+            val result = addCityUseCase.execute(cityName, _forecasts.value)
+            if (result.isSuccess()){
+                _forecasts.update { result.getValue() }
+            }else{
+                _errorMessage.emit(result.getError())
             }
         }
     }
