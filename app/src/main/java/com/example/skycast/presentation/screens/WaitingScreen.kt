@@ -15,14 +15,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.skycast.presentation.Screen
-import kotlinx.coroutines.flow.SharedFlow
+import com.example.skycast.presentation.view_models.WeatherViewModel
 import kotlinx.coroutines.flow.filterNotNull
 
 @Composable
-fun WaitingScreen(navController: NavHostController, hasCities: SharedFlow<Boolean?>) {
-    LaunchedEffect(hasCities) {
-        hasCities.filterNotNull().collect {
-            if (it) {
+fun WaitingScreen(navController: NavHostController, viewModel: WeatherViewModel) {
+    LaunchedEffect(viewModel.forecasts) {
+        viewModel.forecasts.filterNotNull().collect {
+            if (it.isNotEmpty()) {
                 navController.navigate(Screen.MainScreen.route) {
                     popUpTo(Screen.WaitingScreen.route) {
                         inclusive = true

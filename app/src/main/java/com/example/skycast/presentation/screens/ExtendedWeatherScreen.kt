@@ -32,14 +32,14 @@ import androidx.navigation.NavHostController
 import com.example.skycast.R
 import com.example.skycast.domain.model.Forecast
 import com.example.skycast.presentation.ui.AlphaAnimationScope
-import kotlinx.coroutines.flow.StateFlow
+import com.example.skycast.presentation.view_models.WeatherViewModel
 
 @Composable
 fun ExtendedWeatherScreen(
     navController: NavHostController,
-    selectedForecast: StateFlow<Forecast?>,
+    viewModel: WeatherViewModel,
 ) {
-    val forecast = selectedForecast.collectAsState()
+    val forecast = viewModel.selectedForecast.collectAsState()
     Column(
         Modifier
             .fillMaxSize()
@@ -91,7 +91,7 @@ fun Details(modifier: Modifier = Modifier, forecast: Forecast?) {
 }
 
 @Composable
-fun CreateDetailItem(index: Int, forecast: Forecast?) {
+fun CreateDetailItem(index: Int, forecast: Forecast?, modifier: Modifier = Modifier) {
     val drawable: Int
     val name: String
     val value: String
@@ -140,9 +140,10 @@ fun CreateDetailItem(index: Int, forecast: Forecast?) {
         }
     }
     DetailItem(
-        Modifier
+        modifier
             .size(120.dp)
-            .padding(8.dp),
+            .padding(8.dp)
+            .alpha(0.7f),
         drawable = drawable,
         name = name,
         value = value

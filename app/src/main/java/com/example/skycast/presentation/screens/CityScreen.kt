@@ -53,22 +53,17 @@ import com.example.skycast.domain.model.Forecast
 import com.example.skycast.domain.model.MainWeather
 import com.example.skycast.domain.use_case.AddCityUseCase
 import com.example.skycast.presentation.Screen
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.StateFlow
+import com.example.skycast.presentation.view_models.WeatherViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CityScreen(
     navController: NavHostController,
-    forecasts: StateFlow<List<Forecast>?>,
-    errorMessage: SharedFlow<AddCityUseCase.AddCityError>,
-    addCity: (String) -> Unit,
-    deleteCity: (Forecast) -> Unit,
-    selectCity: (Forecast) -> Unit
-) {
+    viewModel: WeatherViewModel,
 
-    val forecastsList = forecasts.collectAsState()
-    val error = errorMessage.collectAsState(initial = null)
+    ) {
+
+    val forecastsList = viewModel.forecasts.collectAsState()
+    val error = viewModel.errorMessage.collectAsState(initial = null)
     ShowError(error.value)
 
     Column(
@@ -93,73 +88,88 @@ fun CityScreen(
             color = Color.White
         )
         Spacer(modifier = Modifier.height(16.dp))
-        SearchCity(Modifier.fillMaxWidth(), addCity)
+        SearchCity(Modifier.fillMaxWidth(), viewModel::addCity)
         Spacer(modifier = Modifier.height(32.dp))
-        LazyColumn {
-            items(
-                items = forecastsList.value ?: emptyList<Forecast>(),
-                key = { it.cityName }) { forecast ->
-                val dismiss = rememberDismissState(
-                    DismissValue.Default, positionalThreshold = {
-                        it * 0.4f
-                    }, confirmValueChange = { dismissValue ->
-                        if (dismissValue == DismissValue.DismissedToStart) {
-                            deleteCity(forecast)
-                        }
-                        true
-                    }
-                )
-                SwipeToDismiss(state = dismiss, background = {
-                    val color =
-                        if (dismiss.targetValue == DismissValue.DismissedToStart) Color.White else Color(
-                            255,
-                            255,
-                            255,
-                            200
-                        )
-                    val imageColor =
-                        if (dismiss.targetValue == DismissValue.DismissedToStart) Color.Black else Color(
-                            0,
-                            0,
-                            0,
-                            200
-                        )
-                    Box(
-                        Modifier
-                            .fillMaxSize()
-                            .background(color, RoundedCornerShape(16.dp))
-                            .padding(8.dp)
-                    ) {
-                        Image(
-                            painterResource(id = R.drawable.baseline_delete_forever_24),
-                            null,
-                            Modifier
-                                .size(32.dp)
-                                .align(
-                                    Alignment.CenterEnd
-                                ),
-                            colorFilter = ColorFilter.tint(imageColor)
-                        )
-                    }
-                }, dismissContent = {
-                    CityInfo(
-                        Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                selectCity(forecast)
-                                navController.navigate(Screen.MainScreen.route) {
-                                    popUpTo(Screen.CityScreen.route) {
-                                        inclusive = true
-                                    }
-                                }
-                            },
-                        forecast.cityName,
-                        forecast.main
-                    )
-                }, directions = setOf(DismissDirection.EndToStart))
+        CityList(
+            forecastsList.value,
+            viewModel::deleteForecast,
+            viewModel::selectForecast,
+            navController
+        )
+    }
+}
 
-                Spacer(modifier = Modifier.height(16.dp))
-            }
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CityList(
+    forecastsList: List<Forecast>?,
+    deleteForecast: (Forecast) -> Unit,
+    selectForecast: (Forecast) -> Unit,
+    navController: NavHostController
+) {
+    LazyColumn {
+        items(
+            items = forecastsList ?: emptyList(),
+            key = { it.cityName }) { forecast ->
+            val dismiss = rememberDismissState(
+                DismissValue.Default, positionalThreshold = {
+                    it * 0.4f
+                }, confirmValueChange = { dismissValue ->
+                    if (dismissValue == DismissValue.DismissedToStart) {
+                        deleteForecast(forecast)
+                    }
+                    true
+                }
+            )
+            SwipeToDismiss(state = dismiss, background = {
+                val color =
+                    if (dismiss.targetValue == DismissValue.DismissedToStart) Color.White else Color(
+                        255,
+                        255,
+                        255,
+                        200
+                    )
+                val imageColor =
+                    if (dismiss.targetValue == DismissValue.DismissedToStart) Color.Black else Color(
+                        0,
+                        0,
+                        0,
+                        200
+                    )
+                Box(
+                    Modifier
+                        .fillMaxSize()
+                        .background(color, RoundedCornerShape(16.dp))
+                        .padding(8.dp)
+                ) {
+                    Image(
+                        painterResource(id = R.drawable.baseline_delete_forever_24),
+                        null,
+                        Modifier
+                            .size(32.dp)
+                            .align(
+                                Alignment.CenterEnd
+                            ),
+                        colorFilter = ColorFilter.tint(imageColor)
+                    )
+                }
+            }, dismissContent = {
+                CityInfo(
+                    Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            selectForecast(forecast)
+                            navController.navigate(Screen.MainScreen.route) {
+                                popUpTo(Screen.CityScreen.route) {
+                                    inclusive = true
+                                }
+                            }
+                        },
+                    forecast.cityName,
+                    forecast.main
+                )
+            }, directions = setOf(DismissDirection.EndToStart))
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }

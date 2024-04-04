@@ -45,7 +45,7 @@ fun Navigation() {
                 )
             }) {
             viewModel.getForecast()
-            WaitingScreen(navController, viewModel.forecasts)
+            WaitingScreen(navController, viewModel)
         }
 
         composable(route = Screen.MainScreen.route,
@@ -65,9 +65,7 @@ fun Navigation() {
             }) {
             WeatherScreen(
                 navController = navController,
-                viewModel.forecasts,
-                viewModel.selectedForecast,
-                viewModel::switchForecast
+                viewModel,
             )
         }
         // how to use arguments
@@ -98,11 +96,7 @@ fun Navigation() {
             }) {
             CityScreen(
                 navController = navController,
-                viewModel.forecasts,
-                viewModel.errorMessage,
-                viewModel::addCity,
-                viewModel::deleteForecast,
-                viewModel::selectForecast,
+                viewModel
             )
         }
         composable(route = Screen.ExtendedWeatherScreen.route,
@@ -120,7 +114,7 @@ fun Navigation() {
                     )
                 )
             }) {
-            ExtendedWeatherScreen(navController = navController, viewModel.selectedForecast)
+            ExtendedWeatherScreen(navController = navController, viewModel)
         }
     }
 }

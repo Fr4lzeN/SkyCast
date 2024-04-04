@@ -59,7 +59,7 @@ import com.example.skycast.domain.model.Weather
 import com.example.skycast.presentation.Screen
 import com.example.skycast.presentation.ui.AlphaAnimationScope
 import com.example.skycast.presentation.ui.AnimateHorizontalSlide
-import kotlinx.coroutines.flow.StateFlow
+import com.example.skycast.presentation.view_models.WeatherViewModel
 import java.util.Locale
 import kotlin.math.abs
 
@@ -67,13 +67,12 @@ import kotlin.math.abs
 @Composable
 fun WeatherScreen(
     navController: NavController,
-    forecasts: StateFlow<List<Forecast>?>,
-    selected: StateFlow<Forecast?>,
-    switchForecast: (Forecast?, Boolean) -> Unit
-) {
+    viewModel: WeatherViewModel,
+
+    ) {
     var horizontalOffset by remember { mutableFloatStateOf(0f) }
-    val forecastList = forecasts.collectAsState()
-    val selectedForecast = selected.collectAsState()
+    val forecastList = viewModel.forecasts.collectAsState()
+    val selectedForecast = viewModel.selectedForecast.collectAsState()
     var swipeDirection by remember { mutableStateOf(SwipeDirection.RIGHT) }
     val sizeHorizontal = with(LocalDensity.current) {
         LocalConfiguration.current.screenWidthDp.dp.toPx()
@@ -81,16 +80,16 @@ fun WeatherScreen(
     Scaffold(modifier = Modifier
         .pointerInput(Unit) {
             detectHorizontalDragGestures(
-                onDragEnd = {
+                onDragCancel = {
                     horizontalOffset = 0f
                 },
-                onDragCancel = {
+                onDragEnd = {
                     calculateSwipeDirection(
                         horizontalOffset,
                         sizeHorizontal
                     )?.let { direction ->
                         swipeDirection = direction
-                        switchForecast(
+                        viewModel.switchForecast(
                             selectedForecast.value,
                             direction == SwipeDirection.RIGHT
                         )
